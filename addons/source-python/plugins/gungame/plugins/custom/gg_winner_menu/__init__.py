@@ -1,6 +1,6 @@
 # ../gungame/plugins/custom/gg_winner_menu/__init__.py
 
-"""."""
+"""The winner of the match gets to choose the next game-mode."""
 
 # =============================================================================
 # >> IMPORTS

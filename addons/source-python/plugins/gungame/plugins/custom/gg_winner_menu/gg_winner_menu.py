@@ -1,6 +1,6 @@
 # ../gungame/plugins/custom/gg_winner_menu/gg_winner_menu.py
 
-"""."""
+"""Plugin that allows the winner of the match to choose the next game-mode."""
 
 # =============================================================================
 # >> IMPORTS
@@ -11,6 +11,7 @@ from random import choice, sample
 # Source.Python
 from engines.server import queue_command_string
 from events import Event
+from filters.players import PlayerIter
 from listeners import OnLevelEnd, OnLevelInit
 from menus import SimpleMenu, SimpleOption
 from players.entity import Player
@@ -35,12 +36,6 @@ _reason_dictionary = {}
 # =============================================================================
 # >> GAME EVENTS
 # =============================================================================
-@Event('round_end')
-def _round_end(game_event):
-    if not gg_plugin_manager.is_team_game:
-        return
-
-
 @Event('round_start')
 def _clear_reasons(game_event):
     _reason_dictionary.clear()
@@ -63,6 +58,12 @@ def _player_death(game_event):
     _reason_dictionary[killer_team] = attacker
 
 
+@Event('bomb_exploded', 'bomb_defused', 'hostage_rescued')
+def _objective_event(game_event):
+    player = player_dictionary[game_event['userid']]
+    _reason_dictionary[player.team] = player.userid
+
+
 # =============================================================================
 # >> GUNGAME EVENTS
 # =============================================================================
@@ -74,12 +75,21 @@ def _individual_win(game_event):
 @Event('gg_team_win')
 def _team_win(game_event):
     winning_team = game_event['winner']
+    userid = _reason_dictionary.get(winning_team)
+    if userid is None:
+        players = [
+            player.userid for player in PlayerIter()
+            if player.team == winning_team
+        ]
 
+        # This should never happen
+        if not players:
+            global _game_mode
+            _game_mode = choice(database)
+            return
 
-@Event('gg_level_up')
-def _level_up(game_event):
-    if not gg_plugin_manager.is_team_game:
-        return
+        userid = choice(players)
+    _send_winner_menu(player_dictionary[userid])
 
 
 # =============================================================================
