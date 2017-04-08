@@ -26,11 +26,70 @@ from . import database
 
 
 # =============================================================================
-# >> GLOBAL VARIABLES
+# >> CLASSES
 # =============================================================================
-_game_mode = None
-_count = min(9, len(database))
-_reason_dictionary = {}
+class _WinnerManager(dict):
+    """Dictionary used to determine who chooses next gamemode."""
+
+    game_mode = None
+    _count = min(9, len(database))
+
+    def send_menu_to_team_winner(self, winning_team):
+        """Determine the team winner and send the winner menu."""
+        userid = _winner_manager.get(winning_team)
+        if userid is None:
+            players = [
+                player.userid for player in PlayerIter()
+                if player.team == winning_team
+            ]
+
+            # This should never happen
+            if not players:
+                self.game_mode = choice(database)
+                return
+
+            userid = choice(players)
+        self.send_winner_menu(player_dictionary[userid])
+
+    def send_winner_menu(self, player):
+        """Send the winner menu to the winning player."""
+        if player.is_fake_client():
+            self.set_choice(player, choice(database))
+            return
+
+        winner_menu.clear()
+        for num, item in enumerate(
+            sample(list(database), self._count),
+            start=1,
+        ):
+            winner_menu.append(
+                SimpleOption(
+                    choice_index=num,
+                    text=item,
+                    value=item,
+                )
+            )
+        winner_menu.send(player.index)
+
+    def set_choice(self, player, value):
+        """Store the next game mode and send a message about the choice."""
+        self.game_mode = value
+        message_manager.chat_message(
+            message='WinnerMenu:Chosen',
+            index=player.index,
+            name=player.name,
+            gamemode=self.game_mode,
+        )
+
+    def set_next_game_mode(self):
+        """Set the next game mode."""
+        current = database.get(self.game_mode)
+        if current is not None:
+            queue_command_string('exec {cfg}'.format(cfg=current))
+        self.game_mode = None
+        self.clear()
+
+_winner_manager = _WinnerManager()
 
 
 # =============================================================================
@@ -38,7 +97,7 @@ _reason_dictionary = {}
 # =============================================================================
 @Event('round_start')
 def _clear_reasons(game_event):
-    _reason_dictionary.clear()
+    _winner_manager.clear()
 
 
 @Event('player_death')
@@ -55,13 +114,13 @@ def _player_death(game_event):
     if killer_team == player_dictionary[userid].team:
         return
 
-    _reason_dictionary[killer_team] = attacker
+    _winner_manager[killer_team] = attacker
 
 
 @Event('bomb_exploded', 'bomb_defused', 'hostage_rescued')
 def _objective_event(game_event):
     player = player_dictionary[game_event['userid']]
-    _reason_dictionary[player.team] = player.userid
+    _winner_manager[player.team] = player.userid
 
 
 # =============================================================================
@@ -69,27 +128,12 @@ def _objective_event(game_event):
 # =============================================================================
 @Event('gg_win')
 def _individual_win(game_event):
-    _send_winner_menu(player_dictionary[game_event['winner']])
+    _winner_manager.send_winner_menu(player_dictionary[game_event['winner']])
 
 
 @Event('gg_team_win')
 def _team_win(game_event):
-    winning_team = game_event['winner']
-    userid = _reason_dictionary.get(winning_team)
-    if userid is None:
-        players = [
-            player.userid for player in PlayerIter()
-            if player.team == winning_team
-        ]
-
-        # This should never happen
-        if not players:
-            global _game_mode
-            _game_mode = choice(database)
-            return
-
-        userid = choice(players)
-    _send_winner_menu(player_dictionary[userid])
+    _winner_manager.send_menu_to_team_winner(game_event['winner'])
 
 
 # =============================================================================
@@ -97,12 +141,7 @@ def _team_win(game_event):
 # =============================================================================
 @OnLevelInit
 def _level_init(map_name):
-    global _game_mode
-    current = database.get(_game_mode)
-    if current is not None:
-        queue_command_string('exec {cfg}'.format(cfg=current))
-    _game_mode = None
-    _reason_dictionary.clear()
+    _winner_manager.set_next_game_mode()
 
 
 @OnLevelEnd
@@ -114,38 +153,7 @@ def _level_end():
 # >> MENU CALLBACKS
 # =============================================================================
 def _chosen_game_mode(parent_menu, index, menu_choice):
-    _set_choice(Player(index), menu_choice.value)
+    _winner_manager.set_choice(Player(index), menu_choice.value)
 
 winner_menu = SimpleMenu(select_callback=_chosen_game_mode)
 winner_menu.title = message_manager['WinnerMenu:Menu']
-
-
-# =============================================================================
-# >> HELPER FUNCTIONS
-# =============================================================================
-def _send_winner_menu(player):
-    if player.is_fake_client():
-        _set_choice(player, choice(database))
-        return
-
-    winner_menu.clear()
-    for num, item in enumerate(sample(list(database), _count), start=1):
-        winner_menu.append(
-            SimpleOption(
-                choice_index=num,
-                text=item,
-                value=item,
-            )
-        )
-    winner_menu.send(player.index)
-
-
-def _set_choice(player, value):
-    global _game_mode
-    _game_mode = value
-    message_manager.chat_message(
-        message='WinnerMenu:Chosen',
-        index=player.index,
-        name=player.name,
-        gamemode=_game_mode,
-    )
