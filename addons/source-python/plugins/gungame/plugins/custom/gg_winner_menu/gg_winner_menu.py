@@ -45,7 +45,7 @@ class _WinnerManager(dict):
 
             # This should never happen
             if not players:
-                self.game_mode = choice(database)
+                self.game_mode = choice(database.keys())
                 return
 
             userid = choice(players)
@@ -53,13 +53,14 @@ class _WinnerManager(dict):
 
     def send_winner_menu(self, player):
         """Send the winner menu to the winning player."""
+        gamemode_choices = database.keys()
         if player.is_fake_client():
-            self.set_choice(player, choice(database))
+            self.set_choice(player, choice(gamemode_choices))
             return
 
         winner_menu.clear()
         for num, item in enumerate(
-            sample(list(database), self._count),
+            sample(gamemode_choices, self._count),
             start=1,
         ):
             winner_menu.append(
