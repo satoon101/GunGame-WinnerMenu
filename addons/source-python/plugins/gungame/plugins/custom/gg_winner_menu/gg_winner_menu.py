@@ -40,7 +40,7 @@ class _WinnerManager(dict):
         if userid is None:
             players = [
                 player.userid for player in PlayerIter()
-                if player.team == winning_team
+                if player.team_index == winning_team
             ]
 
             # This should never happen
@@ -111,8 +111,8 @@ def _player_death(game_event):
     if attacker in (0, userid):
         return
 
-    killer_team = player_dictionary[attacker].team
-    if killer_team == player_dictionary[userid].team:
+    killer_team = player_dictionary[attacker].team_index
+    if killer_team == player_dictionary[userid].team_index:
         return
 
     _winner_manager[killer_team] = attacker
@@ -121,7 +121,7 @@ def _player_death(game_event):
 @Event('bomb_exploded', 'bomb_defused', 'hostage_rescued')
 def _objective_event(game_event):
     player = player_dictionary[game_event['userid']]
-    _winner_manager[player.team] = player.userid
+    _winner_manager[player.team_index] = player.userid
 
 
 # =============================================================================
