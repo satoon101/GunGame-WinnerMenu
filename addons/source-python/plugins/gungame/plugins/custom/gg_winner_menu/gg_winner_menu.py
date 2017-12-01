@@ -86,7 +86,7 @@ class _WinnerManager(dict):
         """Set the next game mode."""
         current = database.get(self.game_mode)
         if current is not None:
-            queue_command_string('exec {cfg}'.format(cfg=current))
+            queue_command_string(f'exec {current}')
         self.game_mode = None
         self.clear()
 
