@@ -1,4 +1,4 @@
-# ../gungame/plugins/included/gg_winner_menu/info.py
+# ../gungame/plugins/custom/gg_winner_menu/info.py
 
 """Contains plugin information."""
 
