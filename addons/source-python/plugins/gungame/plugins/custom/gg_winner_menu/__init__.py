@@ -9,7 +9,7 @@
 from configobj import ConfigObj
 
 # GunGame
-from gungame.core.messages import message_manager
+from gungame.core.messages.manager import message_manager
 from gungame.core.paths import GUNGAME_DATA_PATH
 
 # Plugin

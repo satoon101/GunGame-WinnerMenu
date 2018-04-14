@@ -17,7 +17,7 @@ from menus import SimpleMenu, SimpleOption
 from players.entity import Player
 
 # GunGame
-from gungame.core.messages import message_manager
+from gungame.core.messages.manager import message_manager
 from gungame.core.players.dictionary import player_dictionary
 from gungame.core.plugins.manager import gg_plugin_manager
 
