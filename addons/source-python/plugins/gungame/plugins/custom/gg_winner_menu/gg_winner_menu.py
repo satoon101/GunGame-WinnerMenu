@@ -90,6 +90,7 @@ class _WinnerManager(dict):
         self.game_mode = None
         self.clear()
 
+
 _winner_manager = _WinnerManager()
 
 
@@ -155,6 +156,7 @@ def _level_end():
 # =============================================================================
 def _chosen_game_mode(parent_menu, index, menu_choice):
     _winner_manager.set_choice(Player(index), menu_choice.value)
+
 
 winner_menu = SimpleMenu(select_callback=_chosen_game_mode)
 winner_menu.title = message_manager['WinnerMenu:Menu']

@@ -52,5 +52,6 @@ def _create_database_file():
     database.update(_base_game_modes)
     database.write()
 
+
 if not database:
     _create_database_file()
