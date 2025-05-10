@@ -36,7 +36,7 @@ class _WinnerManager(dict):
 
     def send_menu_to_team_winner(self, winning_team):
         """Determine the team winner and send the winner menu."""
-        userid = _winner_manager.get(winning_team)
+        userid = self.get(winning_team)
         if userid is None:
             players = [
                 player.userid for player in PlayerIter()
@@ -68,7 +68,7 @@ class _WinnerManager(dict):
                     choice_index=num,
                     text=item,
                     value=item,
-                )
+                ),
             )
         winner_menu.send(player.index)
 
@@ -76,7 +76,7 @@ class _WinnerManager(dict):
         """Store the next game mode and send a message about the choice."""
         self.game_mode = value
         message_manager.chat_message(
-            message='WinnerMenu:Chosen',
+            message="WinnerMenu:Chosen",
             index=player.index,
             name=player.name,
             gamemode=self.game_mode,
@@ -86,7 +86,7 @@ class _WinnerManager(dict):
         """Set the next game mode."""
         current = database.get(self.game_mode)
         if current is not None:
-            queue_command_string(f'exec {current}')
+            queue_command_string(f"exec {current}")
         self.game_mode = None
         self.clear()
 
@@ -97,18 +97,18 @@ _winner_manager = _WinnerManager()
 # =============================================================================
 # >> GAME EVENTS
 # =============================================================================
-@Event('round_start')
+@Event("round_start")
 def _clear_reasons(game_event):
     _winner_manager.clear()
 
 
-@Event('player_death')
+@Event("player_death")
 def _player_death(game_event):
     if not gg_plugin_manager.is_team_game:
         return
 
-    attacker = game_event['attacker']
-    userid = game_event['userid']
+    attacker = game_event["attacker"]
+    userid = game_event["userid"]
     if attacker in (0, userid):
         return
 
@@ -119,23 +119,23 @@ def _player_death(game_event):
     _winner_manager[killer_team] = attacker
 
 
-@Event('bomb_exploded', 'bomb_defused', 'hostage_rescued')
+@Event("bomb_exploded", "bomb_defused", "hostage_rescued")
 def _objective_event(game_event):
-    player = player_dictionary[game_event['userid']]
+    player = player_dictionary[game_event["userid"]]
     _winner_manager[player.team_index] = player.userid
 
 
 # =============================================================================
 # >> GUNGAME EVENTS
 # =============================================================================
-@Event('gg_win')
+@Event("gg_win")
 def _individual_win(game_event):
-    _winner_manager.send_winner_menu(player_dictionary[game_event['winner']])
+    _winner_manager.send_winner_menu(player_dictionary[game_event["winner"]])
 
 
-@Event('gg_team_win')
+@Event("gg_team_win")
 def _team_win(game_event):
-    _winner_manager.send_menu_to_team_winner(game_event['winner'])
+    _winner_manager.send_menu_to_team_winner(game_event["winner"])
 
 
 # =============================================================================
@@ -159,4 +159,4 @@ def _chosen_game_mode(parent_menu, index, menu_choice):
 
 
 winner_menu = SimpleMenu(select_callback=_chosen_game_mode)
-winner_menu.title = message_manager['WinnerMenu:Menu']
+winner_menu.title = message_manager["WinnerMenu:Menu"]
